@@ -1,6 +1,16 @@
 # GLocalFlexClient
 
 
+Run the main.py directly with:
+python main.py buy
+python main.py sell 
+
+or use the traderbots.sh script.
+
+TODO:
+- logging
+- increasing speed
+
 
 ## Getting started
 
