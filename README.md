@@ -6,10 +6,11 @@ Run the main.py directly with:
 - python main.py buy
 - python main.py sell 
 
-or use the traderbots.sh script.
+or use the traderbots.sh script. Parameters are adjusted at the beginning of main.py. 
 
 TODO:
 - logging
+- test to find the best parameters
 - increasing speed
 
 
