@@ -2,6 +2,7 @@
 
 
 Run the main.py directly with:
+
 python main.py buy
 python main.py sell 
 
