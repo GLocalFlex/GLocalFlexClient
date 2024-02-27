@@ -167,3 +167,6 @@ launch.json
 
 services/api/bin/*
 services/api/tmp/*
+
+#old development versions of files
+old
