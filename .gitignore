@@ -170,3 +170,5 @@ services/api/tmp/*
 
 #old development versions of files
 old
+log
+
