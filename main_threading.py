@@ -1,3 +1,4 @@
+#Version that uses threads
 
 import datetime as dt
 import os
@@ -5,6 +6,7 @@ import time
 import random
 import argparse
 import logging
+import threading
 
 from GLF_services import GLF_client
 
@@ -90,19 +92,27 @@ def run(side, run_time, sleep_time, host):
             if time.time() > starttime + run_time:
                 break
 
-        quantity = random.randint(qmin, qmax)
-        price = random.uniform(pmin, pmax)
         sleep_multiplier  = random.randint(wmin, wmax)
 
         if not user.token_check_expiry():
             #token about to expire
             user.token_refresh()
 
-        order_status = user.make_order(side, quantity, price)
-        logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')
+        def func_order():
+            quantity = random.randint(qmin, qmax)
+            price = random.uniform(pmin, pmax)    
+            order_status = user.make_order(side, quantity, price)
+            logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')            
+            
+            if order_status.status_code != 200:
+                user.token_new()
+
+        t = threading.Thread(target=func_order)
+        t.start()
+
+        # order_status = user.make_order(side, quantity, price)
+        # logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')
         
-        if order_status.status_code != 200:
-            user.token_new()
 
         time.sleep(sleep_time*sleep_multiplier)
     

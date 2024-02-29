@@ -1,3 +1,4 @@
+#Version running asynchronously
 
 import datetime as dt
 import os
@@ -5,6 +6,7 @@ import time
 import random
 import argparse
 import logging
+import asyncio
 
 from GLF_services import GLF_client
 
@@ -12,9 +14,8 @@ from GLF_services import GLF_client
 # **These need to find their place **
 #how long the script runs and how fast
 #runtime = 5
-#sleeptime = 0.001
+sleeptime = 0.001
 
-SLEEP_TIME = 0.1
 RUN_TIME = 5
 
 # limits for randomized quantity, price and sleeptime multiplier
@@ -47,7 +48,7 @@ SSL_VERIFY = True
 
 
 
-def run(side, run_time, sleep_time, host):
+def run(side, run_time, host):
     if side == 'buy':
         username = os.getenv("GLF_USER1", "<username>")
         password = os.getenv("GLF_PASSWD1", "<password>")
@@ -86,9 +87,9 @@ def run(side, run_time, sleep_time, host):
 
     starttime = time.time() 
     while True:
-        if run_time != 0: #setting to 0 runs forever
-            if time.time() > starttime + run_time:
-                break
+        if time.time() > starttime + run_time:
+            break
+
 
         quantity = random.randint(qmin, qmax)
         price = random.uniform(pmin, pmax)
@@ -98,13 +99,18 @@ def run(side, run_time, sleep_time, host):
             #token about to expire
             user.token_refresh()
 
-        order_status = user.make_order(side, quantity, price)
-        logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')
-        
-        if order_status.status_code != 200:
-            user.token_new()
+        async def func_order(side, quantity, price):
+            await user.make_order(side, quantity, price)
 
-        time.sleep(sleep_time*sleep_multiplier)
+        asyncio.run(func_order(side, quantity, price))
+
+        # order_status = user.make_order(side, quantity, price)
+        # logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')
+        
+        # if order_status.status_code != 200:
+        #     user.token_new()
+
+        time.sleep(sleeptime*sleep_multiplier)
     
     logging.info(f'Finished, side: {side}')
 
@@ -113,7 +119,6 @@ def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create buy or sell orders")
     parser.add_argument('side', choices=['buy', 'sell'])
     parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=RUN_TIME, help=f"Running time in seconds.")
-    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=int, default=SLEEP_TIME, help=f"Sleep time per cycle.")
     parser.add_argument('--log', dest='log', action='store_true')
     parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
     return parser.parse_args()
@@ -124,7 +129,6 @@ if __name__ == "__main__":
     run_time = args.run_time
     log = args.log
     host = args.host
-    sleep_time = args.sleep_time
 
     if log == True:
         #log much #!!!dir needs to exist
@@ -135,4 +139,4 @@ if __name__ == "__main__":
     #     logging.basicConfig(filename='./log/gflex_client.log', encoding='utf-8', level=logging.CRITICAL, format='%(asctime)s %(message)s')
 
     #side = 'buy'
-    run(side, run_time, sleep_time, host)
+    run(side, run_time, host)
