@@ -11,11 +11,7 @@ import threading
 from GLF_services import GLF_client
 
 
-# **These need to find their place **
-#how long the script runs and how fast
-#runtime = 5
-#sleeptime = 0.001
-
+#default values for how long the script runs and how fast
 SLEEP_TIME = 0.1
 RUN_TIME = 5
 
@@ -40,13 +36,12 @@ SELLER_VALUES ={
 #** Almost constant values**
 # set timezone to UTC
 TZ = dt.timezone.utc
-#HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
-HOST = os.getenv("GFLEX_URL", "glocalflexmarket.com")
+HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
+#HOST = os.getenv("GFLEX_URL", "glocalflexmarket.com")
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
 SSL_VERIFY = True
-
 
 
 def run(side, run_time, sleep_time, host):
@@ -90,6 +85,7 @@ def run(side, run_time, sleep_time, host):
     while True:
         if run_time != 0: #setting to 0 runs forever
             if time.time() > starttime + run_time:
+                logging.info('Run time is over.')
                 break
 
         sleep_multiplier  = random.randint(wmin, wmax)
@@ -99,13 +95,19 @@ def run(side, run_time, sleep_time, host):
             user.token_refresh()
 
         def func_order():
-            quantity = random.randint(qmin, qmax)
-            price = random.uniform(pmin, pmax)    
-            order_status = user.make_order(side, quantity, price)
-            logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')            
-            
-            if order_status.status_code != 200:
-                user.token_new()
+            try:
+                quantity = random.randint(qmin, qmax)
+                price = random.uniform(pmin, pmax)    
+                order_status = user.make_order(side, quantity, price)
+                logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')            
+
+                if order_status.status_code == 429:
+                    logging.warning(f'Warning: 429 Too many requests')
+                elif order_status.status_code != 200:
+                    user.token_new()
+            except Exception as e:
+                logging.error(f'ERROR')
+                logging.error(repr(e))
 
         t = threading.Thread(target=func_order)
         t.start()
@@ -115,6 +117,7 @@ def run(side, run_time, sleep_time, host):
         
 
         time.sleep(sleep_time*sleep_multiplier)
+    
     
     logging.info(f'Finished, side: {side}')
 
@@ -137,7 +140,7 @@ if __name__ == "__main__":
     sleep_time = args.sleep_time
 
     if log == True:
-        #log much #!!!dir needs to exist
+        #log much #!!!dir .log/ needs to exist
         logging.basicConfig(filename='./log/gflex_client.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info(f'Client started with runtime: {run_time}, side: {side}')
     # else:
@@ -146,3 +149,5 @@ if __name__ == "__main__":
 
     #side = 'buy'
     run(side, run_time, sleep_time, host)
+    logging.info ('ALL DONE.')
+    

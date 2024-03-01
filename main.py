@@ -38,8 +38,8 @@ SELLER_VALUES ={
 #** Almost constant values**
 # set timezone to UTC
 TZ = dt.timezone.utc
-#HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
-HOST = os.getenv("GFLEX_URL", "glocalflexmarket.com")
+HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
+#HOST = os.getenv("GFLEX_URL", "glocalflexmarket.com")
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
@@ -101,7 +101,9 @@ def run(side, run_time, sleep_time, host):
         order_status = user.make_order(side, quantity, price)
         logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')
         
-        if order_status.status_code != 200:
+        if order_status.status_code == 429:
+            logging.warning(f'Warning: 429 Too many requests')
+        elif order_status.status_code != 200:
             user.token_new()
 
         time.sleep(sleep_time*sleep_multiplier)
