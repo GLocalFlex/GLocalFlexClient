@@ -6,12 +6,24 @@ Run the main.py directly with:
 - python main.py buy
 - python main.py sell 
 
-or use the traderbots.sh script. Parameters are adjusted at the beginning of main.py. 
+or with multithreading:
+- python main_threading.py buy
+- python main_threading.py sell
 
-TODO:
-- logging
-- test to find the best parameters
-- increasing speed
+-r = runtime in seconds (e.g. 60 will stop the script after about a minute)
+-s = sleep time in seconds (can be less than zero or exactly 0)
+--log = sets logging on. If logging is used, "./log" directory is required.
+--host = set the host url as parameter
+
+Example:
+- python main_threading.py sell -r 60 -s 0 --log 
+
+Some hardcoded constant parameters can be adjusted at the beginning of main.py. 
+
+You can also use traderbots.sh script. The script will start several clients at once. 
+
+
+
 
 
 ## Getting started
