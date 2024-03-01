@@ -11,16 +11,19 @@ or with multithreading:
 - python main_threading.py sell
 
 -r = runtime in seconds (e.g. 60 will stop the script after about a minute)
+
 -s = sleep time in seconds (can be less than zero or exactly 0)
+
 --log = sets logging on. If logging is used, "./log" directory is required.
---host = set the host url as parameter
+
+--host = set the host url as cli argument
 
 Example:
 - python main_threading.py sell -r 60 -s 0 --log 
 
-Some hardcoded constant parameters can be adjusted at the beginning of main.py. 
+Some hardcoded 'constant' parameters can be adjusted at the beginning of main.py. 
 
-You can also use traderbots.sh script. The script will start several clients at once. 
+You can also use traderbots.sh script. The script will start several clients at once. Uncomment/comment the relevant lines and modify the parameters. 
 
 
 
