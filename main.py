@@ -1,14 +1,11 @@
 
-import datetime as dt
-import os
 import time
 import random
 import argparse
 import logging
 
 from GLF_services import GLF_Client
-import parameters as par
-
+import parameters as par #parameters in a separate file for easy modification
 
 def run(side, run_time, sleep_time, host):
     if side == 'buy':
