@@ -7,7 +7,7 @@ import logging
 from GLF_services import GLF_Client
 import parameters as par #parameters in a separate file for easy modification
 
-def run(side, run_time, sleep_time, host):
+def run(side: str, run_time: int, sleep_time: int, host: str):
     if side == 'buy':
         username = par.BUYER_USERNAME
         password = par.BUYER_PASSWORD
@@ -50,7 +50,7 @@ def run(side, run_time, sleep_time, host):
             if time.time() > starttime + run_time:
                 break
 
-        if not user.token_check_expiry():
+        if user.token_check_expiry():
             #token about to expire
             user.token_refresh()
 
@@ -60,15 +60,20 @@ def run(side, run_time, sleep_time, host):
                 quantity = random.randint(qmin, qmax)
                 price = random.uniform(pmin, pmax)    
                 order_status = user.make_order(side, quantity, price)
-                logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')            
-
-                if order_status.status_code == 429:
-                    logging.warning(f'Warning: 429 Too many requests')
-                elif order_status.status_code != 200:
+                
+                if order_status.status_code == 200:
+                    logging.info(f'{order_status.elapsed}, {side}, {quantity}, {price}')  
+                elif order_status.status_code == 401:
                     user.token_new()
+                    logging.debug(f'Debug: 401 Get new token.')
+                elif order_status.status_code == 429:
+                    logging.warning(f'Warning: 429 Too many requests.')
+                elif order_status.status_code == 422:
+                    logging.error(f'Error: 422 Unprocessable Content: {order_status.text}.')
+                else:
+                    logging.error(f'Error: Unexpected code: {order_status.text}')
+
             except Exception as e:
-                print ('errors coming!')
-                #logging.error(f'ERROR')
                 logging.error(repr(e))
 
         func_order()

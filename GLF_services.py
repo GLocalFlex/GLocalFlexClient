@@ -71,11 +71,11 @@ class Authenticate:
             raise Exception(f"Failed to refresh token: {response.text}")
 
     def token_check_expiry(self) -> bool:
-        """Check if the token is about to expire in 5 seconds """
-        token_still_valid = True
+        """Check if the token is about to expire in 5 seconds. """
+        token_expires_soon = False
         if self.time_granted + dt.timedelta(seconds = (self.token_expires_in - 5)) < dt.datetime.now(self.timezone):
-            token_still_valid  = False
-        return token_still_valid
+            token_expires_soon  = True
+        return token_expires_soon
 
 
 class Order:
@@ -87,23 +87,26 @@ class Order:
 
         time_now = dt.datetime.now(self.timezone)
 
-        #round times to next fifteen minutes 
+        #round times to next fifteen minutes
+        h = time_now.hour
         if time_now.minute <15:
-            time_now.replace(minute=15, second=0, microsecond=0)
+            m = 15
         elif time_now.minute < 30:
-            time_now.replace(minute=30, second=0, microsecond=0)
+            m = 30
         elif time_now.minute < 45:
-            time_now.replace(minute=45, second=0, microsecond=0)
+            m = 45
         else:
-            time_now.replace(hour=time_now.hour +1, minute=0, second=0, microsecond=0)
+            m = 0
+            h = h + 1
+        time_next15m = time_now.replace(hour=h, minute=m, second=0, microsecond=0)
 
         return {
             "side": side,
             "quantity": quantity, 
             "price": unit_price,
-            "delivery_start": format_time(time_now + dt.timedelta(hours=1)),
-            "delivery_end": format_time(time_now + dt.timedelta(hours=2)),
-            "expiry_time": format_time(time_now + dt.timedelta(minutes=10)),
+            "delivery_start": format_time(time_next15m + dt.timedelta(hours=1)), # use rounded time
+            "delivery_end": format_time(time_next15m + dt.timedelta(hours=2)),
+            "expiry_time": format_time(time_now + dt.timedelta(minutes=10)), #use current time
             "order_type": "partialFill",
             "location": {"location_id": ["some_id"],
                         "country_code": "CZ"}, # optional CZ, GE, CH, FI, ES
