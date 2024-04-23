@@ -3,11 +3,12 @@ import time
 import random
 import argparse
 import logging
+import threading
 
 from GLF_services import GLF_Client
 import parameters as par #parameters in a separate file for easy modification
 
-def run(side: str, run_time: int, sleep_time: int, host: str):
+def run(side: str, run_time: int, sleep_time: int, host: str, multithreading_enable: bool):
     if side == 'buy':
         username = par.BUYER_USERNAME
         password = par.BUYER_PASSWORD
@@ -76,7 +77,11 @@ def run(side: str, run_time: int, sleep_time: int, host: str):
             except Exception as e:
                 logging.error(repr(e))
 
-        func_order()
+        if multithreading_enable == True:
+            t = threading.Thread(target=func_order)
+            t.start()
+        else:
+            func_order()
 
         sleep_multiplier  = random.randint(wmin, wmax)
         time.sleep(sleep_time*sleep_multiplier)
@@ -89,8 +94,9 @@ def cli_args() -> argparse.Namespace:
     parser.add_argument('side', choices=['buy', 'sell'])
     parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=par.RUN_TIME, help=f"Running time in seconds.")
     parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=int, default=par.SLEEP_TIME, help=f"Sleep time per cycle.")
-    parser.add_argument('--log', dest='log', action='store_true')
     parser.add_argument("--host", default=par.HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {par.HOST}")
+    parser.add_argument('--mt', dest='mt_enable', action='store_true', help=f"Run with multithreading.")
+    parser.add_argument('--log', dest='log', action='store_true')
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -99,11 +105,12 @@ if __name__ == "__main__":
     run_time = args.run_time
     log = args.log
     host = args.host
+    multithreading_enable  = args.mt_enable
     sleep_time = args.sleep_time
 
     if log == True:
         logging.basicConfig(filename='./gflex_client.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(message)s')
-        logging.info(f'Client started with runtime: {run_time}, side: {side}')
+        logging.info(f'Client started with run time: {run_time}, side: {side}, multithreading: {multithreading_enable}')
 
     #side = 'buy'
-    run(side, run_time, sleep_time, host)
+    run(side, run_time, sleep_time, host, multithreading_enable)
