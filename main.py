@@ -6,7 +6,7 @@ import logging
 import datetime
 import os
 
-from client import GLF_Client
+from client import Client
 import parameters as par #parameters in a separate file for easy modification
 
 
@@ -79,7 +79,7 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
         location_ids = random.choice([["loc1", "loc2", "loc3"], ['loc1']])
 
 
-    user = GLF_Client(username, password, client_id, host, auth_endpoint, order_endpoint, timezone, verify=verify)
+    user = Client(username, password, client_id, host, auth_endpoint, order_endpoint, timezone, verify=verify)
     user.token_new()
 
     starttime = time.time() 

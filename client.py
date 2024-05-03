@@ -130,7 +130,7 @@ class Order:
         return response
 
 
-class GLF_Client(Authenticate, Order):
+class Client(Authenticate, Order):
     """GLocalFlex client that inherits the methods for authentication an submitting orders."""
     def __init__(self, username: str, password: str, client_id: str, host: str, auth_endpoint: str, order_endpoint : str, timezone, verify=True) -> None:
         super().__init__(username, password, client_id, host, auth_endpoint, timezone, verify)
