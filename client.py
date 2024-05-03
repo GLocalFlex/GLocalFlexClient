@@ -79,7 +79,7 @@ class Authenticate:
 
 
 class Order:
-    def format_order(self, side: str, quantity: int, unit_price: float) -> dict:
+    def format_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str]) -> dict:
         """Format the order data to be suitable for the server."""
         
         def format_time(time):
@@ -108,7 +108,7 @@ class Order:
             "delivery_end": format_time(time_next15m + dt.timedelta(hours=2)),
             "expiry_time": format_time(time_now + dt.timedelta(minutes=10)), #use current time
             "order_type": "partialFill",
-            "location": {"location_id": ["some_id"],
+            "location": {"location_id": loc_ids,
                         "country_code": "CZ"}, # optional CZ, GE, CH, FI, ES
             "metering": {"metering_id": ["some_id"]}
         }
@@ -123,9 +123,9 @@ class Order:
         response = requests.post(self.order_url, headers=headers, verify=self.verify, json=order)
         return response
 
-    def make_order(self, side: str, quantity: int, unit_price: float) -> requests.Response:
+    def make_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str]) -> requests.Response:
         """Make an order, side= 'buy' or 'sell'."""
-        order = self.format_order(side, quantity, unit_price)
+        order = self.format_order(side, quantity, unit_price, loc_ids)
         response = self.submit_order(order)
         return response
 
