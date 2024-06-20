@@ -14,7 +14,7 @@ BUYER_VALUES ={
     'unit_price_min' : 0.1,
     'unit_price_max' : 1,
     'wait_multiplier_min' : 1, 
-    'wait_multiplier_max' : 10,
+    'wait_multiplier_max' : 5,
     }
 SELLER_VALUES ={
     'quantity_min' : 100, 
@@ -22,7 +22,7 @@ SELLER_VALUES ={
     'unit_price_min' : 0.1,
     'unit_price_max' : 1,
     'wait_multiplier_min' : 1, 
-    'wait_multiplier_max' : 10,
+    'wait_multiplier_max' : 5,
     }
 
 

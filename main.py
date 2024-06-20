@@ -117,7 +117,7 @@ if __name__ == "__main__":
     sleep_time = args.sleep_time
 
     if log == True:
-        logging.basicConfig(filename='./gflex_client.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(message)s')
+        logging.basicConfig(encoding='utf-8', level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info(f'Client started with runtime: {run_time}, side: {side}')
 
     try:
