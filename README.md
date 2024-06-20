@@ -6,9 +6,6 @@ Run the main.py directly with:
 - python main.py buy
 - python main.py sell 
 
-
-Username and password are taken from environment variables GLF_USER1 and GLF_PASSWD1 if side is 'buy', GLF_USER2 and GLF_PASSWD2 if side is 'sell'.
-
 -r = run time in seconds (e.g. 60 will stop the script after about a minute, setting zero runs forever)
 
 -s = sleep time in seconds (can be less than zero or exactly 0)
@@ -19,7 +16,7 @@ Username and password are taken from environment variables GLF_USER1 and GLF_PAS
 
 
 Example:
-- python main.py sell -r 60 -s 0 --log -u <username> -p <password> --host 127.0.0.1
+- python main.py sell -r 60 -s 0 --log -u username -p password --host 127.0.0.1
 
 Some hardcoded 'constant' parameters can be adjusted at the main.py file.
 
