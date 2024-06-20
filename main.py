@@ -8,13 +8,16 @@ import os
 
 from client import Client
 
+import warnings
+warnings.filterwarnings("ignore", message="Unverified HTTPS request")
+
 
 TZ = datetime.timezone.utc
 HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
-SSL_VERIFY = True
+SSL_VERIFY = False
 
 """
 Parameters and default values for parameters in the GLocalFlex test client.
