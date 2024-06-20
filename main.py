@@ -7,32 +7,55 @@ import datetime
 import os
 
 from client import Client
-import parameters as par #parameters in a separate file for easy modification
 
 
-# set timezone to UTC
 TZ = datetime.timezone.utc
 HOST = os.getenv("GFLEX_URL", "dev.glocalflexmarket.com")
-#HOST = os.getenv("GFLEX_URL", "glocalflexmarket.com")
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
 SSL_VERIFY = True
 
+"""
+Parameters and default values for parameters in the GLocalFlex test client.
+"""
+
+
+
+# limits for randomized quantity, price and sleeptime multiplier
+BUYER_VALUES ={
+    'quantity_min' : 100,  # order quantity will be in the range btween min and max
+    'quantity_max' : 10000  ,
+    'unit_price_min' : 0.1, # order price will be in the range btween min and max
+    'unit_price_max' : 1,
+    'wait_multiplier_min' : 1, # is multiplied with sleep time 
+    'wait_multiplier_max' : 5,
+    }
+
+SELLER_VALUES ={
+    'quantity_min' : 100, 
+    'quantity_max' : 10000,
+    'unit_price_min' : 0.1,
+    'unit_price_max' : 1,
+    'wait_multiplier_min' : 1, 
+    'wait_multiplier_max' : 5,
+    }
+
+
 def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create buy or sell orders")
     parser.add_argument('side', choices=['buy', 'sell'])
-    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=par.RUN_TIME, help=f"Running time in seconds.")
-    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=int, default=par.SLEEP_TIME, help=f"Sleep time per cycle.")
-    parser.add_argument('--log', dest='log', action='store_true')
+    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=5, help=f"Running time in seconds. Set to 0 runs forever")
+    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=int, default=0.1, help=f"Wait time between creating orders.")
+    parser.add_argument('--log', dest='log', action='store_true', help="Log to console")
     parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
-    parser.add_argument("-u", dest="username", metavar="", help=f"Username")
-    parser.add_argument("-p", dest="password", metavar="", help=f"Password")
+    parser.add_argument("-u, --user", dest="username", metavar="", help=f"Username")
+    parser.add_argument("-p, --password", dest="password", metavar="", help=f"Password")
     return parser.parse_args()
 
 def log_response(code: int, text: str, quantity: int, price: float) -> None:
     if code == 200:
-        logging.info(f'{code}, {side}, {quantity}, {price}')  
+        logging.info(f'status_code={code}, side={side}, quantity={quantity}, price={price}')  
     elif code == 401:
         user.token_new()
         logging.debug(f'Debug: 401 Get new token.')
@@ -56,26 +79,26 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
     password = args.password
     
     if side == 'buy':
-        qmin = par.BUYER_VALUES["quantity_min"]
-        qmax = par.BUYER_VALUES["quantity_max"]
+        qmin = BUYER_VALUES["quantity_min"]
+        qmax = BUYER_VALUES["quantity_max"]
 
-        pmin = par.BUYER_VALUES["unit_price_min"]
-        pmax = par.BUYER_VALUES["unit_price_max"]
+        pmin = BUYER_VALUES["unit_price_min"]
+        pmax = BUYER_VALUES["unit_price_max"]
 
-        wmin = par.BUYER_VALUES["wait_multiplier_min"]
-        wmax = par.BUYER_VALUES["wait_multiplier_max"]
+        wmin = BUYER_VALUES["wait_multiplier_min"]
+        wmax = BUYER_VALUES["wait_multiplier_max"]
         location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
 
 
     if side == 'sell':
-        qmin = par.SELLER_VALUES["quantity_min"]
-        qmax = par.SELLER_VALUES["quantity_max"]
+        qmin = SELLER_VALUES["quantity_min"]
+        qmax = SELLER_VALUES["quantity_max"]
 
-        pmin = par.SELLER_VALUES["unit_price_min"]
-        pmax = par.SELLER_VALUES["unit_price_max"]
+        pmin = SELLER_VALUES["unit_price_min"]
+        pmax = SELLER_VALUES["unit_price_max"]
 
-        wmin = par.SELLER_VALUES["wait_multiplier_min"]
-        wmax = par.SELLER_VALUES["wait_multiplier_max"]
+        wmin = SELLER_VALUES["wait_multiplier_min"]
+        wmax = SELLER_VALUES["wait_multiplier_max"]
         location_ids = random.choice([["loc1", "loc2", "loc3"], ['loc1']])
 
 
