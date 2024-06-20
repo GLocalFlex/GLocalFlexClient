@@ -17,12 +17,11 @@ Username and password are taken from environment variables GLF_USER1 and GLF_PAS
 
 --host = set the host url as cli argument
 
---mt = enable multithreading
 
 Example:
-- python main.py sell -r 60 -s 0 --mt --log 
+- python main.py sell -r 60 -s 0 --log -u <username> -p <password> --host 127.0.0.1
 
-Some hardcoded 'constant' parameters can be adjusted at the parameters.py file.
+Some hardcoded 'constant' parameters can be adjusted at the main.py file.
 
 You can also use traderbots.sh script. The script will start several clients at once. Uncomment/comment the relevant lines and modify the parameters. 
 

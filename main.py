@@ -10,7 +10,7 @@ from client import Client
 
 
 TZ = datetime.timezone.utc
-HOST = os.getenv("GFLEX_URL", "dev.glocalflexmarket.com")
+HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
