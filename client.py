@@ -1,6 +1,7 @@
 
 import requests
 import datetime as dt
+import random 
 
 class Authenticate:
     """Authentication methods for getting new access token and refreshing it with a refresh token."""
@@ -45,7 +46,7 @@ class Authenticate:
         else:
             raise Exception(f"Failed to get token: {response.text}")
         
-    def token_refresh(self) -> None:
+    def token_refresh(self) -> bool:
         """Refresh the access token. """
         #make payload for refreshing the access token
         refresh_token_payload = {
@@ -67,13 +68,16 @@ class Authenticate:
             self.access_token  = token_data["access_token"]
             self.refresh_token = token_data["refresh_token"]
             self.token_expires_in = token_data["expires_in"]
+            return True
         else:
-            raise Exception(f"Failed to refresh token: {response.text}")
+           print(f"Failed to refresh token: {response.text}")
+           return False
 
     def token_check_expiry(self) -> bool:
-        """Check if the token is about to expire in 5 seconds. """
+        """Check if the token is about to expire. """
+        _time_bedore_expiry= 60
         token_expires_soon = False
-        if self.time_granted + dt.timedelta(seconds = (self.token_expires_in - 5)) < dt.datetime.now(self.timezone):
+        if self.time_granted + dt.timedelta(seconds = (self.token_expires_in - _time_bedore_expiry)) < dt.datetime.now(self.timezone):
             token_expires_soon  = True
         return token_expires_soon
 
@@ -109,8 +113,7 @@ class Order:
             "expiry_time": format_time(time_now + dt.timedelta(minutes=10)), #use current time
             "order_type": "partialFill",
             "location": {"location_id": loc_ids,
-                        "country_code": "CZ"}, # optional CZ, GE, CH, FI, ES
-            "metering": {"metering_id": ["some_id"]}
+                        "country_code": random.choice(["CZ", "DE", "CH", "ES"])} # optional CZ, DE, CH, FI, ES
         }
 
     def submit_order(self, order: dict) -> requests.Response:

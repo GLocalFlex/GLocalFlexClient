@@ -17,7 +17,7 @@ HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
-SSL_VERIFY = False
+SSL_VERIFY = True
 
 """
 Parameters and default values for parameters in the GLocalFlex test client.
@@ -48,17 +48,17 @@ SELLER_VALUES ={
 def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create buy or sell orders")
     parser.add_argument('side', choices=['buy', 'sell'])
-    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=5, help=f"Running time in seconds. Set to 0 runs forever")
-    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=int, default=0.1, help=f"Wait time between creating orders.")
-    parser.add_argument('--log', dest='log', action='store_true', help="Log to console")
+    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=par.RUN_TIME, help=f"Running time in seconds.")
+    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=int, default=par.SLEEP_TIME, help=f"Sleep time per cycle. Default: {par.SLEEP_TIME}")
+    parser.add_argument('--log', dest='log', action='store_true')
     parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
-    parser.add_argument("-u, --user", dest="username", metavar="", help=f"Username")
-    parser.add_argument("-p, --password", dest="password", metavar="", help=f"Password")
+    parser.add_argument("-u", dest="username", metavar="", help=f"Username")
+    parser.add_argument("-p", dest="password", metavar="", help=f"Password")
     return parser.parse_args()
 
 def log_response(code: int, text: str, quantity: int, price: float) -> None:
     if code == 200:
-        logging.info(f'status_code={code}, side={side}, quantity={quantity}, price={price}')  
+        logging.info(f'status: {code}, side: {side}, power: {quantity}, price {price}')  
     elif code == 401:
         user.token_new()
         logging.debug(f'Debug: 401 Get new token.')
@@ -104,7 +104,7 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
         wmax = SELLER_VALUES["wait_multiplier_max"]
         location_ids = random.choice([["loc1", "loc2", "loc3"], ['loc1']])
 
-
+    logging.info(f"Target url {host}")
     user = Client(username, password, client_id, host, auth_endpoint, order_endpoint, timezone, verify=verify)
     user.token_new()
 
@@ -115,7 +115,9 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
                 break
 
         if user.token_check_expiry():
-            user.token_refresh()
+            success = user.token_refresh()
+            if not success:
+                user.token_new()
 
         """Makes the order and logs result."""
         try:
