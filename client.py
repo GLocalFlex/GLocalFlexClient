@@ -1,7 +1,6 @@
 
 import requests
 import datetime as dt
-import random 
 
 class Authenticate:
     """Authentication methods for getting new access token and refreshing it with a refresh token."""
@@ -83,7 +82,7 @@ class Authenticate:
 
 
 class Order:
-    def format_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str]) -> dict:
+    def format_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str], country_code: str) -> dict:
         """Format the order data to be suitable for the server."""
         
         def format_time(time):
@@ -113,7 +112,7 @@ class Order:
             "expiry_time": format_time(time_now + dt.timedelta(minutes=10)), #use current time
             "order_type": "partialFill",
             "location": {"location_id": loc_ids,
-                        "country_code": random.choice(["CZ", "DE", "CH", "ES", "FI", "FR", ""])} # optional CZ, DE, CH, FI, ES
+                        "country_code": country_code}
         }
 
     def submit_order(self, order: dict) -> requests.Response:
@@ -126,9 +125,9 @@ class Order:
         response = requests.post(self.order_url, headers=headers, verify=self.verify, json=order)
         return response
 
-    def make_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str]) -> requests.Response:
+    def make_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str], country_code: str) -> requests.Response:
         """Make an order, side= 'buy' or 'sell'."""
-        order = self.format_order(side, quantity, unit_price, loc_ids)
+        order = self.format_order(side, quantity, unit_price, loc_ids, country_code)
         response = self.submit_order(order)
         return response
 

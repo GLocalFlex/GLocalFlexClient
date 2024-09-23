@@ -23,14 +23,15 @@ SSL_VERIFY = True
 Parameters and default values for parameters in the GLocalFlex test client.
 """
 
-
+SLEEP_TIME = 1 # sleep time between cycles
+RUN_TIME = 0 # run time in seconds, 0 runs forever
 
 # limits for randomized quantity, price and sleeptime multiplier
 BUYER_VALUES ={
-    'quantity_min' : 100,  # order quantity will be in the range btween min and max
-    'quantity_max' : 10000  ,
-    'unit_price_min' : 0.1, # order price will be in the range btween min and max
-    'unit_price_max' : 1,
+    'quantity_min' : 5000,  # order quantity will be in the range btween min and max
+    'quantity_max' : 50000  ,
+    'unit_price_min' : 0.5, # order price will be in the range btween min and max
+    'unit_price_max' : 1.5,
     'wait_multiplier_min' : 1, # is multiplied with sleep time 
     'wait_multiplier_max' : 5,
     }
@@ -48,17 +49,17 @@ SELLER_VALUES ={
 def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create buy or sell orders")
     parser.add_argument('side', choices=['buy', 'sell'])
-    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=par.RUN_TIME, help=f"Running time in seconds.")
-    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=int, default=par.SLEEP_TIME, help=f"Sleep time per cycle. Default: {par.SLEEP_TIME}")
+    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=RUN_TIME, help=f"Running time in seconds. 0 runs forever. Default: {RUN_TIME}")
+    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=float, default=SLEEP_TIME, help=f"Sleep time per cycle. Default: {SLEEP_TIME}")
     parser.add_argument('--log', dest='log', action='store_true')
     parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
     parser.add_argument("-u", dest="username", metavar="", help=f"Username")
     parser.add_argument("-p", dest="password", metavar="", help=f"Password")
     return parser.parse_args()
 
-def log_response(code: int, text: str, quantity: int, price: float) -> None:
+def log_response(code: int, text: str, quantity: int, price: float, country: str) -> None:
     if code == 200:
-        logging.info(f'status: {code}, side: {side}, power: {quantity}, price {price}')  
+        logging.info(f'status={code}, side={side}, power={quantity}, price={price}, country={country}')  
     elif code == 401:
         user.token_new()
         logging.debug(f'Debug: 401 Get new token.')
@@ -81,28 +82,7 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
     username = args.username
     password = args.password
     
-    if side == 'buy':
-        qmin = BUYER_VALUES["quantity_min"]
-        qmax = BUYER_VALUES["quantity_max"]
 
-        pmin = BUYER_VALUES["unit_price_min"]
-        pmax = BUYER_VALUES["unit_price_max"]
-
-        wmin = BUYER_VALUES["wait_multiplier_min"]
-        wmax = BUYER_VALUES["wait_multiplier_max"]
-        location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
-
-
-    if side == 'sell':
-        qmin = SELLER_VALUES["quantity_min"]
-        qmax = SELLER_VALUES["quantity_max"]
-
-        pmin = SELLER_VALUES["unit_price_min"]
-        pmax = SELLER_VALUES["unit_price_max"]
-
-        wmin = SELLER_VALUES["wait_multiplier_min"]
-        wmax = SELLER_VALUES["wait_multiplier_max"]
-        location_ids = random.choice([["loc1", "loc2", "loc3"], ['loc1']])
 
     logging.info(f"Target url {host}")
     user = Client(username, password, client_id, host, auth_endpoint, order_endpoint, timezone, verify=verify)
@@ -110,6 +90,31 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
 
     starttime = time.time() 
     while True:
+        country_code = random.choice(["CZ", "DE", "CH", "ES", "FI", "FR", ""]) # optional CZ, DE, CH, FI, ES
+        
+        if side == 'buy':
+            qmin = BUYER_VALUES["quantity_min"]
+            qmax = BUYER_VALUES["quantity_max"]
+
+            pmin = BUYER_VALUES["unit_price_min"]
+            pmax = BUYER_VALUES["unit_price_max"]
+
+            wmin = BUYER_VALUES["wait_multiplier_min"]
+            wmax = BUYER_VALUES["wait_multiplier_max"]
+            location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
+
+
+        if side == 'sell':
+            qmin = SELLER_VALUES["quantity_min"]
+            qmax = SELLER_VALUES["quantity_max"]
+
+            pmin = SELLER_VALUES["unit_price_min"]
+            pmax = SELLER_VALUES["unit_price_max"]
+
+            wmin = SELLER_VALUES["wait_multiplier_min"]
+            wmax = SELLER_VALUES["wait_multiplier_max"]
+            location_ids = random.choice([["loc1", "loc2", "loc3"], ['loc1']])        
+
         if run_time != 0: #setting to 0 runs forever
             if time.time() > starttime + run_time:
                 break
@@ -120,15 +125,15 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
                 user.token_new()
 
         """Makes the order and logs result."""
-        try:
-            quantity = random.randrange(qmin, qmax, 100)
-            price = round(random.uniform(pmin, pmax), 2)    
-            order_status = user.make_order(side, quantity, price, location_ids)
+        # try:
+        quantity = random.randrange(qmin, qmax, 100)
+        price = round(random.uniform(pmin, pmax), 2)    
+        order_status = user.make_order(side, quantity, price, location_ids, country_code)
 
-            log_response(order_status.status_code, order_status.text, quantity, price)
-                    
-        except Exception as e:
-            logging.error(repr(e))
+        log_response(order_status.status_code, order_status.text, quantity, price, country_code)
+                
+        # except Exception as e:
+        #     logging.error(repr(e))
 
 
         sleep_multiplier  = random.randint(wmin, wmax)
