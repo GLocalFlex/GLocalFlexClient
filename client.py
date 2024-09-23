@@ -113,7 +113,7 @@ class Order:
             "expiry_time": format_time(time_now + dt.timedelta(minutes=10)), #use current time
             "order_type": "partialFill",
             "location": {"location_id": loc_ids,
-                        "country_code": random.choice(["CZ", "DE", "CH", "ES"])} # optional CZ, DE, CH, FI, ES
+                        "country_code": random.choice(["CZ", "DE", "CH", "ES", "FI", "FR", ""])} # optional CZ, DE, CH, FI, ES
         }
 
     def submit_order(self, order: dict) -> requests.Response:
