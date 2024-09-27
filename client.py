@@ -82,40 +82,8 @@ class Authenticate:
 
 
 class Order:
-    def format_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str], country_code: str) -> dict:
-        """Format the order data to be suitable for the server."""
-        
-        def format_time(time):
-            return time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
-        time_now = dt.datetime.now(self.timezone)
-
-        #round times to next fifteen minutes
-        h = time_now.hour
-        if time_now.minute <15:
-            m = 15
-        elif time_now.minute < 30:
-            m = 30
-        elif time_now.minute < 45:
-            m = 45
-        else:
-            m = 0
-            h = h + 1
-        time_next15m = time_now.replace(hour=h, minute=m, second=0, microsecond=0)
-
-        return {
-            "side": side,
-            "quantity": quantity, 
-            "price": unit_price,
-            "delivery_start": format_time(time_next15m + dt.timedelta(hours=1)), # use rounded time
-            "delivery_end": format_time(time_next15m + dt.timedelta(hours=2)),
-            "expiry_time": format_time(time_now + dt.timedelta(minutes=10)), #use current time
-            "order_type": "partialFill",
-            "location": {"location_id": loc_ids,
-                        "country_code": country_code}
-        }
-
-    def submit_order(self, order: dict) -> requests.Response:
+    def create_order(self, order: dict) -> requests.Response:
         """Send post request to marketplace."""
 
         headers = {
@@ -125,11 +93,6 @@ class Order:
         response = requests.post(self.order_url, headers=headers, verify=self.verify, json=order)
         return response
 
-    def make_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str], country_code: str) -> requests.Response:
-        """Make an order, side= 'buy' or 'sell'."""
-        order = self.format_order(side, quantity, unit_price, loc_ids, country_code)
-        response = self.submit_order(order)
-        return response
 
 
 class Client(Authenticate, Order):

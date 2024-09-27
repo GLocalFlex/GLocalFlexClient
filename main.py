@@ -3,8 +3,9 @@ import time
 import random
 import argparse
 import logging
-import datetime
+import datetime as dt
 import os
+from dataclasses import dataclass
 
 from client import Client
 
@@ -12,7 +13,7 @@ import warnings
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 
-TZ = datetime.timezone.utc
+TZ = dt.timezone.utc
 HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
@@ -45,6 +46,72 @@ SELLER_VALUES ={
     'wait_multiplier_max' : 5,
     }
 
+@dataclass
+class OrderParameters:
+    side: str
+    location_ids: list[str]
+    country_code: str
+    quantity: float
+    price: float
+
+    def as_dict(self) -> dict:
+        return self.__dict__
+
+
+def set_values(values: dict, side: str) -> OrderParameters:
+        qmin = values["quantity_min"]
+        qmax = values["quantity_max"]
+
+        pmin = values["unit_price_min"]
+        pmax = values["unit_price_max"]
+
+        wmin = values["wait_multiplier_min"]
+        wmax = values["wait_multiplier_max"]
+
+
+        quantity = random.randrange(qmin, qmax, 100)
+        price = round(random.uniform(pmin, pmax), 2)    
+        country_code = random.choice(["CZ", "DE", "CH", "ES", "FI", "FR", ""]) # optional CZ, DE, CH, FI, ES
+        location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
+
+        return OrderParameters(side=side,
+                            location_ids=location_ids,
+                            country_code=country_code,
+                            quantity=quantity,
+                            price=price), wmin, wmax
+        
+
+# def format_order(self, side: str, quantity: int, unit_price: float, loc_ids: list[str], country_code: str) -> dict:
+def format_order(params: OrderParameters) -> dict:
+    """Format the order data to be suitable for the server."""
+    
+    def format_time(time):
+        return time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+    def round_quarter(t: dt.datetime) -> dt.datetime:
+        """Round the time to the nearest quarter hour 00, 15, 30, 45"""
+        minute = t.minute
+        if minute % 15 != 0:
+            t += dt.timedelta(minutes=15 - (minute % 15))
+        return t.replace(second=0, microsecond=0)
+
+
+    time_now = dt.datetime.now(TZ)
+
+    delivery_start = round_quarter(time_now + dt.timedelta(hours=1))
+    delivery_end = round_quarter(time_now + dt.timedelta(hours=2))
+    expiry_time = time_now + dt.timedelta(minutes=10)
+
+    return {
+        "side": params.side,
+        "quantity": params.quantity,
+        "price": params.price,
+        "delivery_start": format_time(delivery_start),
+        "delivery_end": format_time(delivery_end),
+        "expiry_time": format_time(expiry_time),
+        "location": {"location_id": params.location_ids,
+                    "country_code": params.country_code}
+    }
 
 def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create buy or sell orders")
@@ -57,9 +124,10 @@ def cli_args() -> argparse.Namespace:
     parser.add_argument("-p", dest="password", metavar="", help=f"Password")
     return parser.parse_args()
 
-def log_response(code: int, text: str, quantity: int, price: float, country: str) -> None:
+def log_response(code: int, text: str, params: OrderParameters) -> None:
     if code == 200:
-        logging.info(f'status={code}, side={side}, power={quantity}, price={price}, country={country}')  
+        logging.info(f'status={code}, side={params.side}, power={params.quantity}'
+                    f'price={params.price}, country={params.country_code}, loc_ids={params.location_ids}')  
     elif code == 401:
         user.token_new()
         logging.debug(f'Debug: 401 Get new token.')
@@ -83,37 +151,17 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
     password = args.password
     
 
-
     logging.info(f"Target url {host}")
     user = Client(username, password, client_id, host, auth_endpoint, order_endpoint, timezone, verify=verify)
     user.token_new()
 
     starttime = time.time() 
     while True:
-        country_code = random.choice(["CZ", "DE", "CH", "ES", "FI", "FR", ""]) # optional CZ, DE, CH, FI, ES
         
         if side == 'buy':
-            qmin = BUYER_VALUES["quantity_min"]
-            qmax = BUYER_VALUES["quantity_max"]
-
-            pmin = BUYER_VALUES["unit_price_min"]
-            pmax = BUYER_VALUES["unit_price_max"]
-
-            wmin = BUYER_VALUES["wait_multiplier_min"]
-            wmax = BUYER_VALUES["wait_multiplier_max"]
-            location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
-
-
+            params, wmin, wmax = set_values(BUYER_VALUES, 'buy')
         if side == 'sell':
-            qmin = SELLER_VALUES["quantity_min"]
-            qmax = SELLER_VALUES["quantity_max"]
-
-            pmin = SELLER_VALUES["unit_price_min"]
-            pmax = SELLER_VALUES["unit_price_max"]
-
-            wmin = SELLER_VALUES["wait_multiplier_min"]
-            wmax = SELLER_VALUES["wait_multiplier_max"]
-            location_ids = random.choice([["loc1", "loc2", "loc3"], ['loc1']])        
+            params, wmin, wmax = set_values(SELLER_VALUES, 'sell')
 
         if run_time != 0: #setting to 0 runs forever
             if time.time() > starttime + run_time:
@@ -125,21 +173,16 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
                 user.token_new()
 
         """Makes the order and logs result."""
-        # try:
-        quantity = random.randrange(qmin, qmax, 100)
-        price = round(random.uniform(pmin, pmax), 2)    
-        order_status = user.make_order(side, quantity, price, location_ids, country_code)
+        order = format_order(params)
 
-        log_response(order_status.status_code, order_status.text, quantity, price, country_code)
+        order_status = user.create_order(order)
+        log_response(order_status.status_code, order_status.text, params)
                 
-        # except Exception as e:
-        #     logging.error(repr(e))
-
-
+ 
         sleep_multiplier  = random.randint(wmin, wmax)
         time.sleep(sleep_time*sleep_multiplier)
     
-    logging.info(f'Finished, side: {side}')
+    logging.info(f'Finished, side: {params.side}')
 
 
 if __name__ == "__main__":
