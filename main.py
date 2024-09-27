@@ -191,7 +191,7 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
     logging.info(f'Finished, side: {params.side}')
 
 
-if __name__ == "__main__":
+def main():
     args = cli_args()
     side = args.side
     run_time = args.run_time
@@ -206,3 +206,6 @@ if __name__ == "__main__":
         run(side, run_time, sleep_time, args)
     except KeyboardInterrupt:
         pass
+
+if __name__ == "__main__":
+    main()
