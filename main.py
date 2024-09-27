@@ -126,7 +126,7 @@ def cli_args() -> argparse.Namespace:
 
 def log_response(code: int, text: str, params: OrderParameters) -> None:
     if code == 200:
-        logging.info(f'status={code}, side={params.side}, power={params.quantity}'
+        logging.info(f'status={code}, side={params.side}, power={params.quantity}, '
                     f'price={params.price}, country={params.country_code}, loc_ids={params.location_ids}')  
     elif code == 401:
         user.token_new()
