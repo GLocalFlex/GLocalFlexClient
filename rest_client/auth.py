@@ -2,7 +2,7 @@
 import requests
 import datetime as dt
 
-class Authenticate:
+class Auth:
     """Authentication methods for getting new access token and refreshing it with a refresh token."""
     def __init__(self,
                 username: str,
@@ -13,6 +13,7 @@ class Authenticate:
                 timezone, 
                 verify = True
                 ) -> None:
+
         """Initialize user with login data"""
         self.client_id = client_id
         self.timezone = timezone
@@ -81,26 +82,5 @@ class Authenticate:
         return token_expires_soon
 
 
-class Order:
-
-    def create_order(self, order: dict) -> requests.Response:
-        """Send post request to marketplace."""
-
-        headers = {
-            "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": "application/json",
-        }
-        response = requests.post(self.order_url, headers=headers, verify=self.verify, json=order)
-        return response
-
-
-
-class Client(Authenticate, Order):
-    """GLocalFlex client that inherits the methods for authentication an submitting orders."""
-    def __init__(self, username: str, password: str, client_id: str, host: str, auth_endpoint: str, order_endpoint : str, timezone, verify=True) -> None:
-        super().__init__(username, password, client_id, host, auth_endpoint, timezone, verify)
-
-        #Define order_url here, all other necessary stuff is defined by Authenticate.
-        self.order_url = f"https://{host}{order_endpoint}" 
 
 

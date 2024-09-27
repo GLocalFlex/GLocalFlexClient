@@ -30,13 +30,14 @@ from time import sleep
 import requests
 import websocket
 
-HOST = os.getenv("GFLEX_URL", "glocalflexmarket.com")
+HOST = os.getenv("GFLEX_URL", "test.glocalflexmarket.com")
 USERNAME = os.getenv("GFLEX_USER", "<username>")
 PASSWORD = os.getenv("GFLEX_PASSWORD", "<password>")
 
 CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/ws/trade/"
+AVAILALBLE_ENDPOINT = "/api/v1/ws/trade/ /api/v1/ws/ticker/ /api/v1/ws/orderbook/"
 SSL_VERIFY = True
 PORT = 443
 USER_MESSAGE = "Listen for messages, press Ctrl + c to quit): \n"
@@ -172,7 +173,7 @@ def cli_args() -> argparse.Namespace:
     parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
     parser.add_argument("-u", "--username", dest="username", metavar="", default=USERNAME, help=f"Username for authentication, default: {USERNAME}")
     parser.add_argument("-p", "--password", dest="password", metavar="", default=PASSWORD, help=f"Password for authentication, default: {PASSWORD}")
-    parser.add_argument("-t", "--endpoint", dest="endpoint", default=ORDER_ENDPOINT, metavar="", help=f"Order API endpoint, default: {ORDER_ENDPOINT}")
+    parser.add_argument("-t", "--endpoint", dest="endpoint", default=ORDER_ENDPOINT, metavar="", help=f"Order API endpoint, default: {ORDER_ENDPOINT}, endpoints: {AVAILALBLE_ENDPOINT}")
     return parser.parse_args()
 
 def main():

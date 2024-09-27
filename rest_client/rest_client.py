@@ -7,7 +7,8 @@ import datetime as dt
 import os
 from dataclasses import dataclass
 
-from client import Client
+import requests
+from auth import Auth
 
 import warnings
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
@@ -69,6 +70,26 @@ class OrderParameters:
     def as_dict(self) -> dict:
         return self.__dict__
 
+class Client:
+    """GLocalFlex REST client"""
+
+    def __init__(self, username: str, password: str, client_id: str, host: str, auth_endpoint: str, order_endpoint : str, timezone, verify=True) -> None:
+
+        #Define order_url here, all other necessary stuff is defined by Authenticate.
+        self.order_url = f"https://{host}{order_endpoint}" 
+        self.verify = verify
+        self.auth: Auth = Auth(username, password, client_id, host, auth_endpoint, timezone, verify) 
+
+    def create_order(self, order: dict) -> requests.Response:
+        """Send post request to marketplace."""
+
+        headers = {
+            "Authorization": f"Bearer {self.auth.access_token}",
+            "Content-Type": "application/json",
+        }
+        response = requests.post(self.order_url, headers=headers, verify=self.verify, json=order)
+        return response
+
 
 def set_values(values: SellerBuyerSettings, side: str) -> OrderParameters:
 
@@ -119,17 +140,6 @@ def format_order(params: OrderParameters) -> dict:
                     "country_code": params.country_code}
     }
 
-def cli_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create buy or sell orders")
-    parser.add_argument('side', choices=['buy', 'sell'])
-    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=RUN_TIME, help=f"Running time in seconds. 0 runs forever. Default: {RUN_TIME}")
-    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=float, default=SLEEP_TIME, help=f"Sleep time per cycle. Default: {SLEEP_TIME}")
-    parser.add_argument('--log', dest='log', action='store_true')
-    parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
-    parser.add_argument("-u", dest="username", metavar="", help=f"Username")
-    parser.add_argument("-p", dest="password", metavar="", help=f"Password")
-    return parser.parse_args()
-
 def log_response(code: int, text: str, params: OrderParameters) -> None:
     if code == 200:
         logging.info(f'status={code}, side={params.side}, power={params.quantity}, '
@@ -143,6 +153,17 @@ def log_response(code: int, text: str, params: OrderParameters) -> None:
         logging.error(f'Error: 422 Unprocessable Content: {text}.')
     else:
         logging.error(f'Error: Unexpected code: {text}')
+        
+def cli_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Create buy or sell orders")
+    parser.add_argument('side', choices=['buy', 'sell'])
+    parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=RUN_TIME, help=f"Running time in seconds. 0 runs forever. Default: {RUN_TIME}")
+    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=float, default=SLEEP_TIME, help=f"Sleep time per cycle. Default: {SLEEP_TIME}")
+    parser.add_argument('--log', dest='log', action='store_true')
+    parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
+    parser.add_argument("-u", dest="username", metavar="", help=f"Username")
+    parser.add_argument("-p", dest="password", metavar="", help=f"Password")
+    return parser.parse_args()
 
 def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
     
@@ -159,7 +180,7 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
 
     logging.info(f"Target url {host}")
     user = Client(username, password, client_id, host, auth_endpoint, order_endpoint, timezone, verify=verify)
-    user.token_new()
+    user.auth.token_new()
 
     starttime = time.time() 
     while True:
@@ -173,10 +194,10 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
             if time.time() > starttime + run_time:
                 break
 
-        if user.token_check_expiry():
-            success = user.token_refresh()
+        if user.auth.token_check_expiry():
+            success = user.auth.token_refresh()
             if not success:
-                user.token_new()
+                user.auth.token_new()
 
         """Makes the order and logs result."""
         order = format_order(params)
