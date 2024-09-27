@@ -20,31 +20,43 @@ AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
 SSL_VERIFY = True
 
-"""
-Parameters and default values for parameters in the GLocalFlex test client.
-"""
+
+# default values
 
 SLEEP_TIME = 1 # sleep time between cycles
 RUN_TIME = 0 # run time in seconds, 0 runs forever
 
-# limits for randomized quantity, price and sleeptime multiplier
-BUYER_VALUES ={
-    'quantity_min' : 5000,  # order quantity will be in the range btween min and max
-    'quantity_max' : 50000  ,
-    'unit_price_min' : 0.5, # order price will be in the range btween min and max
-    'unit_price_max' : 1.5,
-    'wait_multiplier_min' : 1, # is multiplied with sleep time 
-    'wait_multiplier_max' : 5,
-    }
+@dataclass
+class SellerBuyerSettings:
+    """
+    Dataclass for storing the settings for the buyer and seller.
 
-SELLER_VALUES ={
-    'quantity_min' : 100, 
-    'quantity_max' : 10000,
-    'unit_price_min' : 0.1,
-    'unit_price_max' : 1,
-    'wait_multiplier_min' : 1, 
-    'wait_multiplier_max' : 5,
-    }
+    quantity will be in the range btween min and max
+    price will be in the range btween min and max
+    wait multiplier is multiplied with sleep time 
+    """
+    quantity_min: int 
+    quantity_max: int
+    unit_price_min: float
+    unit_price_max: float
+    wait_multiplier_min: int
+    wait_multiplier_max: int
+
+# Buyer and seller settings
+
+BUYER = SellerBuyerSettings(quantity_min=5000,
+                quantity_max=50000,
+                unit_price_min=0.5,
+                unit_price_max=1.5,
+                wait_multiplier_min=1,
+                wait_multiplier_max=5)
+
+SELLER = SellerBuyerSettings(quantity_min=100,
+                quantity_max=10000,
+                unit_price_min=0.1,
+                unit_price_max=1,
+                wait_multiplier_min=1,
+                wait_multiplier_max=5)
 
 @dataclass
 class OrderParameters:
@@ -58,19 +70,13 @@ class OrderParameters:
         return self.__dict__
 
 
-def set_values(values: dict, side: str) -> OrderParameters:
-        qmin = values["quantity_min"]
-        qmax = values["quantity_max"]
+def set_values(values: SellerBuyerSettings, side: str) -> OrderParameters:
 
-        pmin = values["unit_price_min"]
-        pmax = values["unit_price_max"]
+        wmin = values.wait_multiplier_min
+        wmax = values.wait_multiplier_max
 
-        wmin = values["wait_multiplier_min"]
-        wmax = values["wait_multiplier_max"]
-
-
-        quantity = random.randrange(qmin, qmax, 100)
-        price = round(random.uniform(pmin, pmax), 2)    
+        quantity = random.randrange(values.quantity_min, values.quantity_max, 100)
+        price = round(random.uniform(values.unit_price_min, values.unit_price_max), 2)    
         country_code = random.choice(["CZ", "DE", "CH", "ES", "FI", "FR", ""]) # optional CZ, DE, CH, FI, ES
         location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
 
@@ -159,9 +165,9 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
     while True:
         
         if side == 'buy':
-            params, wmin, wmax = set_values(BUYER_VALUES, 'buy')
+            params, wmin, wmax = set_values(BUYER, 'buy')
         if side == 'sell':
-            params, wmin, wmax = set_values(SELLER_VALUES, 'sell')
+            params, wmin, wmax = set_values(SELLER, 'sell')
 
         if run_time != 0: #setting to 0 runs forever
             if time.time() > starttime + run_time:
