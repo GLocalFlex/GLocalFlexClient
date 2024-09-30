@@ -22,11 +22,11 @@ import argparse
 import json
 import multiprocessing
 import os
+import time
 import ssl
 import threading
 from dataclasses import dataclass
 from time import sleep
-
 import requests
 import websocket
 
@@ -79,7 +79,7 @@ class WebSocketClient:
     def receive_message(self):
         err = self.ws.run_forever(ping_interval=1, sslopt=self.sslopt)
         if err:
-            # send exit message to shutdown the mmain thread
+            # send exit message to shutdown the main thread
             self.shutdown_pipe.send("exit")
             print(f"WebSocket connection error: {err}\n")
 
@@ -174,6 +174,7 @@ def cli_args() -> argparse.Namespace:
     parser.add_argument("-u", "--username", dest="username", metavar="", default=USERNAME, help=f"Username for authentication, default: {USERNAME}")
     parser.add_argument("-p", "--password", dest="password", metavar="", default=PASSWORD, help=f"Password for authentication, default: {PASSWORD}")
     parser.add_argument("-t", "--endpoint", dest="endpoint", default=ORDER_ENDPOINT, metavar="", help=f"Order API endpoint, default: {ORDER_ENDPOINT}, endpoints: {AVAILALBLE_ENDPOINT}")
+    parser.add_argument("-d", "--debug", dest="debug", action="store_true", help="Enable websocket debug mode")
     return parser.parse_args()
 
 def main():
@@ -183,6 +184,9 @@ def main():
     user = args.username
     secret = args.password
     ws_endpoint = args.endpoint
+
+    if args.debug:
+        websocket.enableTrace(True)
 
     auth_url = f"https://{host}:{PORT}{AUTH_ENDPOINT}"
     ws_url = f"wss://{host}:{PORT}{ws_endpoint}"
@@ -200,7 +204,9 @@ def main():
     print("#############################################################")
 
     ws_client = WebSocketClient(ws_url, token=access_token)
-    ws_client.run()
+    while True:
+        ws_client.run()
+        time.sleep(10)
 
 
 if __name__ == "__main__":
