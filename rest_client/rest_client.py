@@ -202,9 +202,12 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
         """Makes the order and logs result."""
         order = format_order(params)
 
-        order_status = user.create_order(order)
-        log_response(order_status.status_code, order_status.text, params)
-                
+        try:
+            order_status = user.create_order(order)
+            log_response(order_status.status_code, order_status.text, params)
+        except ssl.SSLERROR as e:
+            logging.error(f'Error: {e}')
+            time.sleep(5)
  
         sleep_multiplier  = random.randint(wmin, wmax)
         time.sleep(sleep_time*sleep_multiplier)
