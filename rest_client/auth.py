@@ -29,7 +29,7 @@ class Auth:
                         "password": password,
                         }
 
-    def token_new(self) -> None:
+    def token_new(self) -> bool:
         """Request a new access token. """
         self.time_granted = dt.datetime.now(self.timezone)
         response = requests.post(
@@ -38,13 +38,14 @@ class Auth:
                             headers={"Content-Type": "application/x-www-form-urlencoded"},
                             verify=self.verify
                             )
-        if response.status_code == 200: #200 means succesfull
+        if response.status_code == 200:
             token_data = response.json()
             self.access_token  = token_data["access_token"]
             self.refresh_token = token_data["refresh_token"]
             self.token_expires_in = token_data["expires_in"]
+            return True
         else:
-            raise Exception(f"Failed to get token: {response.text}")
+            return False
         
     def token_refresh(self) -> bool:
         """Refresh the access token. """

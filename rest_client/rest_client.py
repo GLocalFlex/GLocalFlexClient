@@ -198,9 +198,9 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
                 break
 
         if user.auth.token_check_expiry():
-            success = user.auth.token_refresh()
-            if not success:
-                user.auth.token_new()
+            if not user.auth.token_refresh():
+                while not user.auth.token_new():
+                    time.sleep(5)
 
         """Makes the order and logs result."""
         order = format_order(params)
@@ -209,7 +209,8 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
             order_status = user.create_order(order)
             code = log_response(order_status.status_code, order_status.text, params)
             if order_status.status_code == 401:
-                user.auth.token_new()
+                while not user.auth.token_new():
+                    time.sleep(5)
         except ssl.SSLError as e:
             logging.error(f'Error: {e}')
             time.sleep(5)
