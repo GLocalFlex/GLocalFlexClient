@@ -5,6 +5,7 @@ import argparse
 import logging
 import datetime as dt
 import os
+import ssl
 from dataclasses import dataclass
 
 import requests
@@ -45,8 +46,8 @@ class SellerBuyerSettings:
 
 # Buyer and seller settings
 
-BUYER = SellerBuyerSettings(quantity_min=5000,
-                quantity_max=50000,
+BUYER = SellerBuyerSettings(quantity_min=1000,
+                quantity_max=2000,
                 unit_price_min=0.5,
                 unit_price_max=1.5,
                 wait_multiplier_min=1,
@@ -99,7 +100,9 @@ def set_values(values: SellerBuyerSettings, side: str) -> OrderParameters:
         quantity = random.randrange(values.quantity_min, values.quantity_max, 100)
         price = round(random.uniform(values.unit_price_min, values.unit_price_max), 2)    
         country_code = random.choice(["CZ", "DE", "CH", "ES", "FI", "FR", ""]) # optional CZ, DE, CH, FI, ES
-        location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
+        # country_code = random.choice(["FI"]) # optional CZ, DE, CH, FI, ES
+        # location_ids = random.choice([[None], ["loc1", "loc2", "loc3"], ["loc.*"]])
+        location_ids = [None]
 
         return OrderParameters(side=side,
                             location_ids=location_ids,
@@ -131,7 +134,7 @@ def format_order(params: OrderParameters) -> dict:
 
     return {
         "side": params.side,
-        "quantity": params.quantity,
+        "power": params.quantity,
         "price": params.price,
         "delivery_start": format_time(delivery_start),
         "delivery_end": format_time(delivery_end),
@@ -145,7 +148,6 @@ def log_response(code: int, text: str, params: OrderParameters) -> None:
         logging.info(f'status={code}, side={params.side}, power={params.quantity}, '
                     f'price={params.price}, country={params.country_code}, loc_ids={params.location_ids}')  
     elif code == 401:
-        user.token_new()
         logging.debug(f'Debug: 401 Get new token.')
     elif code == 429:
         logging.warning(f'Warning: 429 Too many requests.')
@@ -153,6 +155,7 @@ def log_response(code: int, text: str, params: OrderParameters) -> None:
         logging.error(f'Error: 422 Unprocessable Content: {text}.')
     else:
         logging.error(f'Error: Unexpected code: {text}')
+
         
 def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create buy or sell orders")
@@ -204,8 +207,10 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
 
         try:
             order_status = user.create_order(order)
-            log_response(order_status.status_code, order_status.text, params)
-        except ssl.SSLERROR as e:
+            code = log_response(order_status.status_code, order_status.text, params)
+            if order_status.status_code == 401:
+                user.auth.token_new()
+        except ssl.SSLError as e:
             logging.error(f'Error: {e}')
             time.sleep(5)
  
