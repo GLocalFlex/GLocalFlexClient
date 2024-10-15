@@ -6,6 +6,7 @@ WebSocket Example Client Listener
 options:
   -h, --help        show this help message and exit
   --host            Host url, DEFAULT: glocalflexmarket.com
+  --port            Host port, DEFAULT: 443
   -u , --username   Username for authentication, default: <username>
   -p , --password   Password for authentication, default: <password>
   -t , --endpoint   Order API endpoint, default: /api/v1/ws/trade
@@ -38,7 +39,7 @@ CLIENT_ID = "glocalflexmarket_public_api"
 AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/ws/trade/"
 AVAILALBLE_ENDPOINT = "/api/v1/ws/trade/ /api/v1/ws/ticker/ /api/v1/ws/orderbook/"
-SSL_VERIFY = True
+SSL_VERIFY = False
 PORT = 443
 USER_MESSAGE = "Listen for messages, press Ctrl + c to quit): \n"
 
@@ -171,6 +172,7 @@ def check_response(response):
 def cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="WebSocket Example Client Listener")
     parser.add_argument("--host", default=HOST, dest="host", metavar="", help=f"Host url, DEFAULT: {HOST}")
+    parser.add_argument("--port", default=PORT, dest="port", metavar="", help=f"Host port, DEFAULT: {PORT}")
     parser.add_argument("-u", "--username", dest="username", metavar="", default=USERNAME, help=f"Username for authentication, default: {USERNAME}")
     parser.add_argument("-p", "--password", dest="password", metavar="", default=PASSWORD, help=f"Password for authentication, default: {PASSWORD}")
     parser.add_argument("-t", "--endpoint", dest="endpoint", default=ORDER_ENDPOINT, metavar="", help=f"Order API endpoint, default: {ORDER_ENDPOINT}, endpoints: {AVAILALBLE_ENDPOINT}")
@@ -181,6 +183,7 @@ def main():
 
     args = cli_args()
     host = args.host
+    port = args.port
     user = args.username
     secret = args.password
     ws_endpoint = args.endpoint
@@ -188,8 +191,8 @@ def main():
     if args.debug:
         websocket.enableTrace(True)
 
-    auth_url = f"https://{host}:{PORT}{AUTH_ENDPOINT}"
-    ws_url = f"wss://{host}:{PORT}{ws_endpoint}"
+    auth_url = f"https://{host}:{port}{AUTH_ENDPOINT}"
+    ws_url = f"wss://{host}:{port}{ws_endpoint}"
 
     token = request_token(CLIENT_ID, user, secret, auth_url, ssl_verify=SSL_VERIFY)
 
