@@ -7,7 +7,7 @@ import datetime as dt
 import os
 import ssl
 from dataclasses import dataclass
-
+import urllib3
 import requests
 from auth import Auth
 
@@ -154,7 +154,7 @@ def log_response(code: int, text: str, params: OrderParameters) -> None:
     elif code == 422:
         logging.error(f'Error: 422 Unprocessable Content: {text}.')
     else:
-        logging.error(f'Error: Unexpected code: {text}')
+        logging.error(f'Request failed with code {code}')
 
         
 def cli_args() -> argparse.Namespace:
@@ -201,20 +201,27 @@ def run(side: str, run_time: int, sleep_time: int, args: argparse.Namespace):
             if not user.auth.token_refresh():
                 while not user.auth.token_new():
                     time.sleep(5)
+                    
 
         """Makes the order and logs result."""
         order = format_order(params)
 
         try:
             order_status = user.create_order(order)
-            code = log_response(order_status.status_code, order_status.text, params)
-            if order_status.status_code == 401:
-                while not user.auth.token_new():
-                    time.sleep(5)
-        except ssl.SSLError as e:
+        except (ssl.SSLError) as e:
             logging.error(f'Error: {e}')
             time.sleep(5)
- 
+            continue
+        except (urllib3.exceptions.NewConnectionError, requests.exceptions.ConnectionError) as e:
+            logging.error(f'Marketplace is not available')
+            logging.error(f'Error: {e}')
+            time.sleep(5)
+            continue
+
+        if order_status.status_code == 401:
+            while not user.auth.token_new():
+                time.sleep(5)
+        log_response(order_status.status_code, order_status.text, params)
         sleep_multiplier  = random.randint(wmin, wmax)
         time.sleep(sleep_time*sleep_multiplier)
     
