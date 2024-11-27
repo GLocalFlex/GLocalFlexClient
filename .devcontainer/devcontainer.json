@@ -1,0 +1,40 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+	"name": "Existing Dockerfile",
+	"build": {
+		// Sets the run context to one level up instead of the .devcontainer folder.
+		"context": "..",
+		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+		"dockerfile": "./Dockerfile"
+	},
+
+	"containerUser": "root",
+
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"GitHub.copilot",
+				"ms-python.black-formatter",
+				"ms-python.isort",
+				"mutantdino.resourcemonitor"
+			]
+		}
+	},
+	// this mounts the library folder and the configuration folder
+	// those folders are shared between all services because they contain functions
+	// that are used by several services but not all
+	"mounts": [
+		// "source=${localEnv:HOME}/Project/g-local-flex-market/services/core/py/${localEnv:PY_SERVICE}/src/${localEnv:PY_SERVICE}.py,target=/src/${localEnv:PY_SERVICE}.py,type=bind,consistency=cached"
+		// "source=${localEnv:HOME}/Project/g-local-flex-market/services/core/py/common,target=/app/common,type=bind,consistency=cached",
+		// "source=${localEnv:HOME}/Project/g-local-flex-market/services/core/py/lib ,target=/app/lib,type=bind,consistency=cached",
+		// "source=${localEnv:HOME}/Project/g-local-flex-market/services/core/py/tradecloser/test ,target=/app/test,type=bind,consistency=cached",
+	],
+	// specify the workspace folder of the service
+	"workspaceMount": "source=${localWorkspaceFolder}/,target=/client/,type=bind",
+	"workspaceFolder": "/client/"
+	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "devcontainer"
+}
