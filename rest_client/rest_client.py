@@ -24,7 +24,7 @@ AUTH_ENDPOINT = "/auth/oauth/v2/token"
 ORDER_ENDPOINT = "/api/v1/order/"
 SSL_VERIFY = True
 DEFAULT_SLEEP_TIME = 1 # sleep time between cycles
-DEFAULT_RUN_TIME = 0 # run time in seconds, 0 runs forever
+DEFAULT_RUN_TIME = -1 # run time in seconds, 0 runs forever
 COUNTRY_CODES_ALLOWED = ["CZ", "DE", "CH", "ES", "FI", "FR", ""]
 
 HTTP_AUTHENTICATION_ERROR = 401
@@ -231,7 +231,7 @@ class Client:
         starttime = time.time() 
         while True:
             
-            if self.config.params.runtime != 0: #setting to 0 runs forever
+            if self.config.params.runtime > 0: #setting to 0 runs forever
                 if time.time() > starttime + self.config.params.runtime:
                     break
 
@@ -263,7 +263,8 @@ class Client:
 
             self.log_response(response.status_code, response.text, order)
 
-            
+            if config.params.runtime == -1:
+                break
 
             sleep_multiplier  = random.randint(wmin, wmax)
             time.sleep(self.config.params.frequency*sleep_multiplier)
