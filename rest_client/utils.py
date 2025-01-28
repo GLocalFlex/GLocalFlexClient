@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import argparse
-from enum import StrEnum
+from enum import Enum
 
-class Side(StrEnum):
+class Side(Enum):
     BUY = 'buy'
     SELL = 'sell'
 
@@ -25,8 +25,6 @@ class SellerBuyerSettings:
     baseline: dict = None
 
 
-
-
 @dataclass
 class UserConfig:
     username: str = None
@@ -41,9 +39,10 @@ class EndpointConfig:
 class Parameters:
     side: str
     runtime: float
-    frequency: float
     timezone: str
+    frequency: float = -1
     log: bool = False
+    test: bool = False
 
 @dataclass
 class HostConfig:
@@ -67,6 +66,15 @@ def cli_args(config: DefaultConfig) -> argparse.Namespace:
     parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=float, default=config.params.frequency, help=f"Sleep time per cycle. Default: {config.params.frequency}")
     parser.add_argument('--log', dest='log', action='store_true')
     parser.add_argument("--host", default=config.market.host, dest="host", metavar="", help=f"Host url, DEFAULT: {config.market.host}")
+    parser.add_argument("--test", dest="test", action="store_true", help=f"Test mode. Does not require you to specify all order params, missing details will be filled with random values.")
     parser.add_argument("-u", dest="username", metavar="", help=f"Username")
     parser.add_argument("-p", dest="password", metavar="", help=f"Password")
+
+    parser.add_argument("--quantity", dest="quantity", metavar="", help=f"Quantity")
+    parser.add_argument("--price", dest="price", metavar="", help=f"Price")
+    parser.add_argument("--delivery_start", metavar="", help=f"Delivery start")
+    parser.add_argument("--delivery_end", metavar="", help=f"Delivery end")
+    parser.add_argument("--location_ids", metavar="", help=f"Location ids")
+    parser.add_argument("--country_code", metavar="", help=f"Country code")
+
     return parser.parse_args()    

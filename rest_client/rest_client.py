@@ -25,8 +25,7 @@ ORDER_ENDPOINT = "/api/v1/order/"
 SSL_VERIFY = True
 DEFAULT_SLEEP_TIME = 1 # sleep time between cycles
 DEFAULT_RUN_TIME = 0 # run time in seconds, 0 runs forever
-# COUNTRY_CODES = ["CZ", "DE", "CH", "ES", "FI", "FR", ""]
-COUNTRY_CODES_ALLOWED = ["CZ"]
+COUNTRY_CODES_ALLOWED = ["CZ", "DE", "CH", "ES", "FI", "FR", ""]
 
 HTTP_AUTHENTICATION_ERROR = 401
 
@@ -66,31 +65,32 @@ config = DefaultConfig(
         side=Side.BUY,
     ),
     buyer=SellerBuyerSettings(
-                quantity_min=1000,
-                quantity_max=2000,
-                unit_price_min=0.5,
-                unit_price_max=1.5,
-                wait_multiplier_min=1,
-                wait_multiplier_max=5,
-                ),
+        quantity_min=1000,
+        quantity_max=2000,
+        unit_price_min=0.5,
+        unit_price_max=1.5,
+        wait_multiplier_min=1,
+        wait_multiplier_max=5,
+    ),
     seller=SellerBuyerSettings(
-                quantity_min=100,
-                quantity_max=10000,
-                unit_price_min=0.1,
-                unit_price_max=1,
-                wait_multiplier_min=1,
-                wait_multiplier_max=5,
-                baseline=baseline_data,
-                )
+        quantity_min=100,
+        quantity_max=10000,
+        unit_price_min=0.1,
+        unit_price_max=1,
+        wait_multiplier_min=1,
+        wait_multiplier_max=5,
+        baseline=baseline_data,
+    ),
 )
+
 
 @dataclass
 class Order:
     side: str
-    location_ids: list[str]
-    country_code: str
-    quantity: float
-    price: float
+    location_ids: list[str] = None
+    country_code: str = None
+    quantity: float = None
+    price: float = None
     delivery_start: dt.datetime = None
     delivery_end: dt.datetime = None
     expiry_time: dt.datetime = None
@@ -104,8 +104,8 @@ class Order:
         
         return {
             "side": self.side,
-            "power": self.quantity,
-            "price": self.price,
+            "power": float(self.quantity),
+            "price": float(self.price),
             "delivery_start": self.delivery_start,
             "delivery_end": self.delivery_end,
             "expiry_time": self.expiry_time,
@@ -117,9 +117,10 @@ class Order:
 class Client:
     """GLocalFlex REST client"""
 
-    def __init__(self, config: DefaultConfig) -> None:
+    def __init__(self, config: DefaultConfig, cli_order: Order) -> None:
 
         self.config = config
+        self.order = cli_order
         #Define order_url here, all other necessary stuff is defined by Authenticate.
         self.order_url = f"https://{config.market.host}{config.market.api.order}" 
         self.verify = config.market.ssl_verify
@@ -142,7 +143,7 @@ class Client:
         return response
 
 
-    def set_order_parameters(self, values: SellerBuyerSettings, side: str, baseline: dict) -> Order:
+    def set_order_parameters(self, values: SellerBuyerSettings, side: str, order: Order) -> tuple[Order, int, int]:
             def format_time(time):
                 return time.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
@@ -154,25 +155,54 @@ class Client:
                 return t.replace(second=0, microsecond=0)
             
             wmin = values.wait_multiplier_min
-            wmax = values.wait_multiplier_max
-            quantity = random.randrange(values.quantity_min, values.quantity_max, 100)
-            price = round(random.uniform(values.unit_price_min, values.unit_price_max), 2)    
-            country_code = random.choice(COUNTRY_CODES_ALLOWED)
+            wmax = values.wait_multiplier_max                
 
-            location_ids = [None]
+
+            if order.quantity is not None:
+                quantity = order.quantity
+            else:
+                quantity = random.randrange(values.quantity_min, values.quantity_max, 100)
+            
+            if order.price is not None:
+                price = order.price
+            else:  
+                price = round(random.uniform(values.unit_price_min, values.unit_price_max), 2)
+            
+            if order.country_code is not None:
+                country_code = order.country_code
+            else:
+                country_code = random.choice(COUNTRY_CODES_ALLOWED)
+
+            if order.location_ids is not None:
+                location_ids = order.location_ids
+            else:
+                location_ids = [None]
 
             time_now = dt.datetime.now(self.config.params.timezone)
+                
+            if order.delivery_start is not None:
+                delivery_start = dt.datetime.fromisoformat(order.delivery_start)
+            else:
+                delivery_start = round_quarter(time_now + dt.timedelta(hours=1))
+            
+            if order.delivery_end is not None:
+                delivery_end = dt.datetime.fromisoformat(order.delivery_end)
+            else:
+                delivery_end = round_quarter(time_now + dt.timedelta(hours=2))
 
-            return Order(side=side,
+
+
+
+            return Order(side="buy" if side == Side.BUY else "sell",
                         location_ids=location_ids,
                         country_code=country_code,
                         quantity=quantity,
                         price=price,
-                        delivery_start= format_time(round_quarter(time_now + dt.timedelta(hours=1))),
-                        delivery_end=format_time(round_quarter(time_now + dt.timedelta(hours=2))),
+                        delivery_start= format_time(delivery_start),
+                        delivery_end=format_time(delivery_end),
                         expiry_time=format_time(time_now + dt.timedelta(minutes=10)),
 
-                        baseline=baseline
+                        baseline=baseline_data if side == Side.SELL else None
                         ), wmin, wmax
         
     @staticmethod
@@ -211,9 +241,9 @@ class Client:
                         time.sleep(5)
 
             if self.config.params.side == Side.BUY:
-                order, wmin, wmax = self.set_order_parameters(config.buyer, Side.BUY, baseline_data)
+                order, wmin, wmax = self.set_order_parameters(config.buyer, Side.BUY, self.order)
             if self.config.params.side == Side.SELL:
-                order, wmin, wmax = self.set_order_parameters(config.seller, Side.SELL, baseline_data)
+                order, wmin, wmax = self.set_order_parameters(config.seller, Side.SELL, self.order)
               
             try:
                 response = self.send_order(order.as_dict())
@@ -233,6 +263,8 @@ class Client:
 
             self.log_response(response.status_code, response.text, order)
 
+            
+
             sleep_multiplier  = random.randint(wmin, wmax)
             time.sleep(self.config.params.frequency*sleep_multiplier)
         
@@ -248,14 +280,43 @@ def main():
     config.params.frequency = args.sleep_time
     config.params.log = args.log
     config.params.side = Side(args.side)
+    config.params.test = args.test
+
+    new_order = Order(
+        side= args.side,
+        quantity= args.quantity,
+        price= args.price,
+        delivery_start= args.delivery_start,
+        delivery_end= args.delivery_end,
+        location_ids= args.location_ids.split(",") if args.location_ids is not None else None,
+        country_code= args.country_code,
+    )
 
 
     
-    client = Client(config)
+    client = Client(config, new_order)
 
     if config.params.log == True:
         logging.basicConfig(encoding='utf-8', level=logging.INFO, format='%(asctime)s %(message)s')
         logging.info(f'Client started with runtime: {config.params.runtime}, side: {config.params.side}')
+        if config.params.test == True:
+            logging.info(f'Test mode enabled')
+
+        if config.params.test == False and  new_order.quantity is None:
+            logging.warning(f'No quantity set!')
+            return
+        if config.params.test == False and new_order.price is None:
+            logging.warning(f'No price set!')
+            return
+        if config.params.test == False and new_order.delivery_start is None:
+            logging.warning(f'No delivery start set!')
+            return
+        if config.params.test == False and new_order.delivery_end is None:
+            logging.warning(f'No delivery end set!')
+            return
+        if config.params.test == False and new_order.country_code is None:
+            logging.warning(f'No country code set!')
+            return
 
     try:
         client.run()
