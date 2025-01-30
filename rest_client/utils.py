@@ -63,10 +63,11 @@ def cli_args(config: DefaultConfig) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create buy or sell orders")
     parser.add_argument('side', choices=['buy', 'sell'])
     parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=config.params.runtime, help=f"Running time in seconds. 0 runs forever, -1 leaves the program after 1 execution. Default: {config.params.runtime}")
-    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=float, default=config.params.frequency, help=f"Sleep time per cycle. Default: {config.params.frequency}")
+    parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=float, default=config.params.frequency, help=f"Time between order requests. Default: {config.params.frequency}")
     parser.add_argument('--log', dest='log', action='store_true')
     parser.add_argument("--host", default=config.market.host, dest="host", metavar="", help=f"Host url, DEFAULT: {config.market.host}")
-    parser.add_argument("--test", dest="test", action="store_true", help=f"Test mode. Does not require you to specify all order params, missing details will be filled with random values.")
+    parser.add_argument("--sim", dest="test", action="store_true", help=f"Simulation mode. Generates random buy or sell orders Order paramaters ranges are specified rest_client.py.")
+    parser.add_argument("-v", dest="verbose", action="store_true", help=f"Verbose mode")
     parser.add_argument("-u", dest="username", metavar="", help=f"Username")
     parser.add_argument("-p", dest="password", metavar="", help=f"Password")
 

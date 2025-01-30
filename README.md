@@ -19,7 +19,7 @@ The rest client is able to automatically create buy and sell orders. The paramet
     --host         Host url, DEFAULT: test.glocalflexmarket.com
     -u             Username
     -p             Password
-    --test         Test mode. Does not require you to specify all order params, missing details will be filled with random values.
+    --sim          Simulation mode. Generates random buy or sell orders Order paramaters ranges are specified rest_client.py.
     --quantity     Quantity
     --price        Price
     --delivery_start Delivery start
@@ -33,7 +33,7 @@ Example
     python3 rest_client.py sell --log --host test.glocalflexmarket.com -u username -p password --price 1.0 --quantity 100 --delivery_start 2025-01-29T00:00:00 --delivery_end 2025-01-29309:00:00 --location_id loc1,loc2 --country_code FI
 
     #  buyer
-    python3 rest_client.py buy --log --host test.glocalflexmarket.com -u username -p password -r 60 --test
+    python3 rest_client.py buy --log --host test.glocalflexmarket.com -u username -p password -r 60 --sim
 
 The websocket client is able to listen for live events such as ticker, order updates, expired orders and orderbook updates.
 
