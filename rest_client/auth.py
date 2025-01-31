@@ -36,7 +36,7 @@ class Auth:
 
     def token_new(self) -> bool:
         """Request a new access token. """
-        logging.info("Request new access token")
+        logging.info("Authenticate user, request new access token")
         self.time_granted = dt.datetime.now(self.timezone)
         response = requests.post(
                             self.auth_url,
@@ -49,7 +49,7 @@ class Auth:
             self.access_token  = token_data["access_token"]
             self.refresh_token = token_data["refresh_token"]
             self.token_expires_in = token_data["expires_in"]
-            logging.info("Success")
+            logging.info("Authentication success")
             return True
         else:
             logging.error(f"Request failed with code: {response.status_code}")
