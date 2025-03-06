@@ -70,15 +70,15 @@ def cli_args(config: DefaultConfig) -> argparse.Namespace:
     parser.add_argument("-r", "--run", dest="run_time", metavar="", type=int, default=config.params.runtime, help=f"Running time in seconds. 0 runs forever, -1 sends one order and exits, same as --run-once option. Default: {config.params.runtime}")
     parser.add_argument("-s", "--sleep", dest="sleep_time", metavar="", type=float, default=config.params.frequency, help=f"Time between order requests. Default: {config.params.frequency}")
     parser.add_argument('--log', dest='log', action='store_true', help=f"Log orders output to file")
-    parser.add_argument("--run_once", dest="once", action="store_true", help=f"Send order once and exit")
+    parser.add_argument("--run-once", dest="once", action="store_true", help=f"Send order once and exit")
 
     # order option to override default settings
     parser.add_argument("--power", dest="power", metavar="", help=f"Power in Watt")
     parser.add_argument("--price", dest="price", metavar="", help=f"Price in €/kWh")
-    parser.add_argument("--delivery_start", metavar="", default=None, help=f"Delivery start UTC time format 2025-01-29T00:00:00, Default: current time + 1h")
-    parser.add_argument("--delivery_end", metavar="", default=None, help=f"Delivery end  UTC time format 2025-01-29T00:00:00, Default: current time + 2h")
-    parser.add_argument("--expiry_time", metavar="", default=None, help=f"Expiry time UTC time format 2025-01-29T00:00:00, , Default: current time + 10min")
-    parser.add_argument("--location_ids", metavar="", default=None, help=f"Location ids")
-    parser.add_argument("--country_code", metavar="", default=None, help=f"Country code, options {const.COUNTRY_CODES_ALLOWED}")
+    parser.add_argument("--delivery-start", metavar="", default=None, help=f"Delivery start UTC time format 2025-01-29T00:00:00, Default: current time + 1h")
+    parser.add_argument("--delivery-end", metavar="", default=None, help=f"Delivery end  UTC time format 2025-01-29T00:00:00, Default: current time + 2h")
+    parser.add_argument("--expiry-time", metavar="", default=None, help=f"Expiry time UTC time format 2025-01-29T00:00:00, , Default: current time + 10min")
+    parser.add_argument("--location-ids", metavar="", default=None, help=f"Location ids")
+    parser.add_argument("--country-code", metavar="", default=None, help=f"Country code, options {const.COUNTRY_CODES_ALLOWED}")
 
     return parser.parse_args()    

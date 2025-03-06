@@ -4,7 +4,9 @@ The repository contains a simple automated Rest client that acts as a seller or 
 
 The rest client is able to automatically create buy and sell orders. The parameters are set in the `rest_client.py` file.
 
-    usage: rest_client.py [-h] [-r] [-s] [--log] [--host] [-u] [-p] {buy,sell}
+    usage: rest_client.py [-h] [--host] [-u] [-p] [-r] [-s] [--log] [--run-once] [--power] [--price] [--delivery-start]
+                        [--delivery-end] [--expiry-time] [--location-ids] [--country-code]
+                        {buy,sell}
 
     Create buy or sell orders
 
@@ -12,27 +14,40 @@ The rest client is able to automatically create buy and sell orders. The paramet
     {buy,sell}
 
     options:
-    -h, --help     show this help message and exit
-    -r , --run     Running time in seconds. 0 runs forever. Default: 0
-    -s , --sleep   Sleep time per cycle. Default: 1
-    --log
-    --host         Host url, DEFAULT: test.glocalflexmarket.com
-    -u             Username
-    -p             Password
-    --power        Power
-    --price        Price
-    --delivery_start Delivery start
-    --delivery_end Delivery end
-    --location_ids Location ids
-    --country_code Country code
+    -h, --help         show this help message and exit
+    --host             Host url, DEFAULT: test.glocalflexmarket.com
+    -u                 Username
+    -p                 Password
+    -r , --run         Running time in seconds. 0 runs forever, -1 sends one order and exits, same as --run-once option.
+                        Default: 0
+    -s , --sleep       Time between order requests. Default: 1
+    --log              Log orders output to file
+    --run-once         Send order once and exit
+    --power            Power in Watt
+    --price            Price in €/kWh
+    --delivery-start   Delivery start UTC time format 2025-01-29T00:00:00, Default: current time + 1h
+    --delivery-end     Delivery end UTC time format 2025-01-29T00:00:00, Default: current time + 2h
+    --expiry-time      Expiry time UTC time format 2025-01-29T00:00:00, , Default: current time + 10min
+    --location-ids     Location ids
+    --country-code     Country code, options ['CZ', 'DE', 'CH', 'ES', 'FI', 'FR', '']
+
+
+Minimal Example
+
+    # sends one buy order
+    python3 rest_client/rest_client.py -r 0 --host test.glocalflexmarket.com -u your_username -p your_password buy  --run-once
+
+
+    # sends one sell order
+    python3 rest_client/rest_client.py -r 0 --host test.glocalflexmarket.com -u your_username -p your_password buy  --run-once
 
 Example
     
     # seller
-    python3 rest_client.py sell --log --host test.glocalflexmarket.com -u username -p password --price 1.0 --power 100 --delivery_start '2025-01-31T14:45:00.000Z' --delivery_end '2025-01-31T15:45:00.000Z' --location_id loc1,loc2 --country_code FI
+    python3 rest_client.py sell --log --host test.glocalflexmarket.com -u your_username -p your_password --price 1.0 --power 100 --delivery_start '2025-01-31T14:45:00.000Z' --delivery_end '2025-01-31T15:45:00.000Z' --location_id loc1,loc2 --country_code FI
 
     #  buyer
-    python3 rest_client.py buy --log --host test.glocalflexmarket.com -u username -p password -r 60
+    python3 rest_client.py buy --log --host test.glocalflexmarket.com -u your_username -p your_password -r 60
 
 The websocket client is able to listen for live events such as ticker, order updates, expired orders and orderbook updates.
 
@@ -51,4 +66,10 @@ The websocket client is able to listen for live events such as ticker, order upd
 
 Example:
 
-    python3 ws_client.py --host test.glocalflexmarket.com -u username -p password
+    # receives the latest trades
+    python3 ws_client.py --host test.glocalflexmarket.com -u your_username -p your_password -t /api/v1/ws/ticker
+    # receives the latest orderbook
+    python3 ws_client.py --host test.glocalflexmarket.com -u your_username -p your_password -t /api/v1/ws/orderbook/
+    # receives the latest updates of your order
+    python3 ws_client.py --host test.glocalflexmarket.com -u your_username -p your_password -t /api/v1/ws/trade/ 
+
