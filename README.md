@@ -35,11 +35,11 @@ The rest client is able to automatically create buy and sell orders. The paramet
 Minimal Example
 
     # sends one buy order
-    python3 rest_client/rest_client.py -r 0 --host test.glocalflexmarket.com -u your_username -p your_password buy  --run-once
+    python3 rest_client/rest_client.py buy --host test.glocalflexmarket.com -u your_username -p your_password --run-once
 
 
     # sends one sell order
-    python3 rest_client/rest_client.py -r 0 --host test.glocalflexmarket.com -u your_username -p your_password buy  --run-once
+    python3 rest_client/rest_client.py sell --host test.glocalflexmarket.com -u your_username -p your_password --run-once
 
 Example
     
